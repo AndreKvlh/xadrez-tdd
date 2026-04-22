@@ -1,6 +1,7 @@
 package com.chess.engine.board;
 
 import com.chess.engine.pieces.Piece;
+import com.chess.engine.pieces.Position;
 
 public class Board {
 	private final Piece[][] grid;
@@ -35,6 +36,10 @@ public class Board {
     public void setPiece(int x, int y, Piece piece) {
         validateCoordinates(x, y);
         this.grid[x][y] = piece;
+        // Opcional: Atualizar a peça para saber onde ela está
+        if (piece != null) {
+            piece.setPosition(new Position(x, y));
+        }
     }
 
     public void removePiece(int x, int y, Piece piece) {

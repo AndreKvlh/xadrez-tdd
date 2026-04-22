@@ -2,33 +2,23 @@ package com.chess.engine.pieces;
 
 //Classe base para reduzir duplicação (DRY)
 public abstract class AbstractPiece implements Piece {
-	protected int x;
-	protected int y;
-	protected boolean isWhite; // Ou um Enum Color
-	
-	public AbstractPiece(int x, int y, boolean isWhite) {
-	    this.x = x;
-	    this.y = y;
-	    this.isWhite = isWhite;
-	}
- 
-	// Métodos comuns a todas as peças, como getters, setters ou posição	
-	
-	public int getX() {
-		return x;
-	}
+	protected Position position;
+    protected boolean isWhite;
 
-	public void setX(int x) {
-		this.x = x;
-	}
+    public AbstractPiece(Position position, boolean isWhite) {
+        this.position = position;
+        this.isWhite = isWhite;
+    }
 
-	public int getY() {
-		return y;
-	}
+    @Override
+    public Position getPosition() {
+        return this.position;
+    }
 
-	public void setY(int y) {
-		this.y = y;
-	}
+    @Override
+    public void setPosition(Position position) {
+        this.position = position;
+    }
 
 	public boolean isWhite() {
 		return isWhite;
