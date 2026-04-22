@@ -12,4 +12,9 @@ public class Knight extends AbstractPiece {
 
         return (dx == 1 && dy == 2) || (dx == 2 && dy == 1);
     }
+    
+    @Override
+    public Piece copy() {
+        return new Knight(this.x, this.y, this.isWhite);
+    }
 }
