@@ -5,4 +5,5 @@ public interface Piece {
     Position getPosition();
     void setPosition(Position position);
     Piece copy();
+    boolean isWhite();
 }
