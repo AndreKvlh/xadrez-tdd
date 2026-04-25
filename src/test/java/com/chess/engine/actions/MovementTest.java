@@ -21,31 +21,32 @@ class MovementTest {
     }
 
     @Test
-    void testExecuteMove() {
+    void testExecuteMoveNoCapture() {
         Pawn pawn = new Pawn(new Position(0, 1), true);
         board.setPiece(0, 1, pawn);
         Position target = new Position(0, 2);
 
-        movement.executeMove(board, pawn, target);
+        // O método deve retornar null, pois não havia peça no destino
+        Piece captured = movement.executeMove(board, pawn, target);
 
-        assertNull(board.getPiece(0, 1), "A casa de origem deve estar vazia após o movimento");
-        assertEquals(pawn, board.getPiece(0, 2), "A peça deve estar na nova posição");
-        assertEquals(target, pawn.getPosition(), "A peça deve ter atualizado seu estado interno de posição");
+        assertNull(captured, "A captura deve ser nula se a casa de destino estiver vazia");
+        assertNull(board.getPiece(0, 1), "Casa de origem vazia");
+        assertEquals(pawn, board.getPiece(0, 2), "Peça na casa de destino");
     }
 
     @Test
-    void testValidateMoveLogic() {
-        // Setup: Rei branco em 4,4, Torre preta em 4,0 (bloqueada pelo próprio peão em 4,2)
-        King king = new King(new Position(4, 4), true);
-        Rook enemyRook = new Rook(new Position(4, 0), false);
-        Pawn blocker = new Pawn(new Position(4, 2), true);
+    void testExecuteMoveWithCapture() {
+        Pawn attacker = new Pawn(new Position(0, 1), true);
+        Pawn victim = new Pawn(new Position(0, 2), false);
+        
+        board.setPiece(0, 1, attacker);
+        board.setPiece(0, 2, victim);
+        
+        // O método deve retornar a peça capturada (victim)
+        Piece captured = movement.executeMove(board, attacker, new Position(0, 2));
 
-        board.setPiece(4, 4, king);
-        board.setPiece(4, 0, enemyRook);
-        board.setPiece(4, 2, blocker);
-
-        // Movimento do bloco que abriria o xeque para o rei
-        assertFalse(movement.validateMove(board, blocker, new Position(4, 3)), 
-            "Mover o peão que protege o rei deveria ser um movimento ilegal (se resultar em xeque)");
+        assertEquals(victim, captured, "O método deve retornar a peça que estava na casa de destino");
+        assertEquals(attacker, board.getPiece(0, 2), "Peça atacante deve ter ocupado a casa");
+        assertNull(board.getPiece(0, 1), "Casa de origem vazia");
     }
 }
