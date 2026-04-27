@@ -7,13 +7,14 @@ public class King extends AbstractPiece {
     }
 
     @Override
+    protected char getSymbol() {
+        return 'K';
+    }
+
+    @Override
     public boolean isValidMove(int targetX, int targetY) {
         int dx = Math.abs(targetX - this.position.x());
         int dy = Math.abs(targetY - this.position.y());
-
-        // Para o Rei:
-        // 1. Deve haver movimento (dx > 0 ou dy > 0)
-        // 2. O deslocamento máximo em qualquer eixo deve ser 1
         return (dx <= 1 && dy <= 1) && (dx > 0 || dy > 0);
     }
 

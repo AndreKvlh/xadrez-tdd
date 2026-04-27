@@ -10,6 +10,16 @@ public abstract class AbstractPiece implements Piece {
         this.isWhite = isWhite;
     }
 
+    // Método que as subclasses devem implementar obrigatoriamente
+    protected abstract char getSymbol();
+    
+    @Override
+    public String getDisplay() {
+        char symbol = getSymbol();
+        return isWhite ? String.valueOf(symbol).toUpperCase() 
+                       : String.valueOf(symbol).toLowerCase();
+    }
+    
     @Override
     public Position getPosition() {
         return this.position;

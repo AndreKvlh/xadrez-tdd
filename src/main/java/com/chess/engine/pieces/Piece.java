@@ -6,4 +6,5 @@ public interface Piece {
     void setPosition(Position position);
     Piece copy();
     boolean isWhite();
+    String getDisplay();
 }

@@ -7,10 +7,14 @@ public class Knight extends AbstractPiece {
     }
 
     @Override
+    protected char getSymbol() {
+        return 'N'; // Usamos 'N' para Knight, já que 'K' é do Rei
+    }
+
+    @Override
     public boolean isValidMove(int targetX, int targetY) {
         int dx = Math.abs(targetX - this.position.x());
         int dy = Math.abs(targetY - this.position.y());
-
         return (dx == 1 && dy == 2) || (dx == 2 && dy == 1);
     }
 

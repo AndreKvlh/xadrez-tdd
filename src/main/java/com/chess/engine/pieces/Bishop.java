@@ -7,13 +7,14 @@ public class Bishop extends AbstractPiece {
     }
 
     @Override
+    protected char getSymbol() {
+        return 'B';
+    }
+
+    @Override
     public boolean isValidMove(int targetX, int targetY) {
         int dx = Math.abs(targetX - this.position.x());
         int dy = Math.abs(targetY - this.position.y());
-
-        // Para o Bispo:
-        // 1. Deve haver movimento (dx > 0)
-        // 2. A variação em X deve ser igual à variação em Y para ser diagonal
         return dx > 0 && dx == dy;
     }
 

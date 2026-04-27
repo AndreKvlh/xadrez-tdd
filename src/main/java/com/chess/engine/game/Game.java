@@ -32,11 +32,58 @@ public class Game {
      */
     public void startGame() {
         if (isStarted) return;
+        
+        initializePieces();
+        
         this.isStarted = true;
         this.currentTurn = 0;
         System.out.println("Jogo iniciado! Vez das Brancas.");
     }
 
+    /**
+     * Posiciona as peças no tabuleiro nas coordenadas iniciais e 
+     * registra cada peça na lista de peças do jogador correspondente.
+     */
+    private void initializePieces() {
+        // Posicionamento das peças (Y=0,7 back row; Y=1,6 pawns)
+        // Índice 0: Brancas (players[0]), Índice 1: Pretas (players[1])
+        
+        // --- Peças Pretas (Linhas 0 e 1) ---
+        setupBackRow(0, false);
+        setupPawnRow(1, false);
+
+        // --- Peças Brancas (Linhas 7 e 6) ---
+        setupBackRow(7, true);
+        setupPawnRow(6, true);
+    }
+
+    private void setupBackRow(int y, boolean isWhite) {
+        Player player = isWhite ? players[0] : players[1];
+        
+        // Ordem: Torre, Cavalo, Bispo, Rainha, Rei, Bispo, Cavalo, Torre
+        // Nota: Assumindo que seu construtor de Peça aceita (Position, isWhite)
+        // Se a lógica de posição for tratada via setPosition no setPiece, ajustamos aqui.
+        
+        Piece[] pieces = {
+            new Rook(null, isWhite), new Knight(null, isWhite), new Bishop(null, isWhite),
+            new Queen(null, isWhite), new King(null, isWhite), new Bishop(null, isWhite),
+            new Knight(null, isWhite), new Rook(null, isWhite)
+        };
+
+        for (int x = 0; x < 8; x++) {
+            board.setPiece(x, y, pieces[x]);
+            player.getPieces().add(pieces[x]);
+        }
+    }
+
+    private void setupPawnRow(int y, boolean isWhite) {
+        Player player = isWhite ? players[0] : players[1];
+        for (int x = 0; x < 8; x++) {
+            Pawn pawn = new Pawn(null, isWhite);
+            board.setPiece(x, y, pawn);
+            player.getPieces().add(pawn);
+        }
+    }
     /**
      * Reinicia o jogo, limpando o tabuleiro e as listas de peças dos jogadores.
      */
@@ -146,7 +193,8 @@ public class Game {
             System.out.print((8 - y) + " ");
             for (int x = 0; x < 8; x++) {
                 Piece p = board.getPiece(x, y);
-                System.out.print((p == null ? "." : p.toString()) + " ");
+                // Agora o polimorfismo resolve a exibição para qualquer peça
+                System.out.print((p == null ? "." : p.getDisplay()) + " ");
             }
             System.out.println();
         }
