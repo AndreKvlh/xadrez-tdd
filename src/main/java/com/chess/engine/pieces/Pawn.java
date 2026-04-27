@@ -19,7 +19,7 @@ public class Pawn extends AbstractPiece {
         int direction = isWhite ? -1 : 1;
 
         if (dx == 0 && dy == direction) return true;
-        if (!hasMoved && dx == 0 && dy == 2 * direction) return true;
+        if (!this.hasMoved && dx == 0 && dy == 2 * direction) return true;
         if (Math.abs(dx) == 1 && dy == direction) return true;
 
         return false;

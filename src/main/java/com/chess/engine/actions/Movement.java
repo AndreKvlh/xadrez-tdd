@@ -37,13 +37,13 @@ public class Movement {
      */
     public boolean validateMove(Board board, Piece piece, Position target) {
         if (!piece.isValidMove(target.x(), target.y())) {
+        		System.out.println(piece.isValidMove(target.x(), target.y()));
             return false;
         }
-
         if (validation.isAlliedPiece(board, piece, target)) return false;
         if (validation.isCovered(board, piece, target)) return false;
         if (piece instanceof Pawn && !validation.pawnCanAttack(board, (Pawn) piece, target)) return false;
-
+        
         Board tempBoard = new Board(board); 
         Piece tempPiece = tempBoard.getPiece(piece.getPosition().x(), piece.getPosition().y());
         

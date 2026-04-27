@@ -42,16 +42,14 @@ public class Validation {
         int dy = target.y() - pawn.getPosition().y();
         int direction = pawn.isWhite() ? -1 : 1;
 
-        // Se for movimento diagonal (ataque)
+        // Movimento diagonal (captura)
         if (dx == 1 && dy == direction) {
             Piece targetPiece = board.getPiece(target.x(), target.y());
-            // Só pode atacar se for inimigo
             return targetPiece != null && targetPiece.isWhite() != pawn.isWhite();
         }
 
-        // Se for movimento reto (avanço)
-        if (dx == 0 && dy == direction) {
-            // Só pode avançar se a casa estiver vazia
+        // Movimento vertical (avanço de 1 ou 2 casas)
+        if (dx == 0 && (dy == direction || (!pawn.hasMoved() && dy == 2 * direction))) {
             return board.getPiece(target.x(), target.y()) == null;
         }
 

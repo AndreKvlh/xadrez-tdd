@@ -79,7 +79,8 @@ public class Game {
     private void setupPawnRow(int y, boolean isWhite) {
         Player player = isWhite ? players[0] : players[1];
         for (int x = 0; x < 8; x++) {
-            Pawn pawn = new Pawn(null, isWhite);
+            Position pos = new Position(x, y); // Define a posição correta
+            Pawn pawn = new Pawn(pos, isWhite);
             board.setPiece(x, y, pawn);
             player.getPieces().add(pawn);
         }
@@ -151,34 +152,36 @@ public class Game {
             generateBoard();
             Player currentPlayer = players[currentTurn];
 
-            // Trava temporária: Apenas brancas se movem
-            if (!currentPlayer.isWhite()) {
-                System.out.println("Aguardando IA (Turno das Pretas)...");
-                break;
-            }
-
+            // Chama o selectPiece polimorficamente (funciona para Humano ou IA)
             Move move = currentPlayer.selectPiece(board);
-            Piece piece = board.getPiece(move.source().x(), move.source().y());
 
-            if (piece != null && piece.isWhite() == currentPlayer.isWhite()) {
-                if (movement.validateMove(board, piece, move.target())) {
-                    
-                    Piece captured = movement.executeMove(board, piece, move.target());
-                    if (captured != null) {
-                        capturePiece(captured, currentPlayer, players[1 - currentTurn]);
+            // Verifica se um movimento foi retornado (segurança)
+            if (move != null) {
+                Piece piece = board.getPiece(move.source().x(), move.source().y());
+
+                if (piece != null && piece.isWhite() == currentPlayer.isWhite()) {
+                    if (movement.validateMove(board, piece, move.target())) {
+                        
+                        Piece captured = movement.executeMove(board, piece, move.target());
+                        if (captured != null) {
+                            capturePiece(captured, currentPlayer, players[1 - currentTurn]);
+                        }
+
+                        if (validation.isPromoted(piece)) {
+                            promotePawn((Pawn) piece, currentPlayer);
+                        }
+
+                        currentTurn = 1 - currentTurn;
+                    } else {
+                        System.out.println("Movimento ilegal!");
                     }
-
-                    // Verifica promoção usando a lógica da classe Validation
-                    if (validation.isPromoted(piece)) {
-                        promotePawn((Pawn) piece, currentPlayer);
-                    }
-
-                    currentTurn = 1 - currentTurn;
                 } else {
-                    System.out.println("Movimento ilegal!");
+                    System.out.println("Selecione uma peça válida sua.");
                 }
             } else {
-                System.out.println("Selecione uma peça válida sua.");
+                System.out.println("Nenhum movimento válido disponível.");
+                // Aqui você poderia adicionar lógica para fim de jogo (Xeque-mate)
+                break; 
             }
         }
     }

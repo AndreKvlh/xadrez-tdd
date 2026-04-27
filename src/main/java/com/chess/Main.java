@@ -4,6 +4,8 @@ import com.chess.engine.actions.Movement;
 import com.chess.engine.board.Board;
 import com.chess.engine.game.Game;
 import com.chess.engine.players.HumanPlayer;
+import com.chess.engine.players.IAPlayer;
+import com.chess.engine.players.Player;
 import com.chess.engine.rules.Validation;
 
 public class Main {
@@ -15,8 +17,8 @@ public class Main {
         
         // 2. Instancia os jogadores
         // Por enquanto, apenas o Player branco terá o input real do terminal
-        HumanPlayer white = new HumanPlayer(true);
-        HumanPlayer black = new HumanPlayer(false);
+        Player white = new HumanPlayer(true);
+        Player black = new IAPlayer(false, validation, movement);
         
         // 3. Cria e inicia o jogo
         Game game = new Game(board, movement, validation, white, black);
