@@ -1,14 +1,15 @@
 package com.chess.engine.players;
 
-import com.chess.engine.actions.Move;
-import com.chess.engine.actions.Movement;
-import com.chess.engine.board.Board;
-import com.chess.engine.pieces.*;
-import com.chess.engine.rules.Validation;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import com.chess.engine.actions.Move;
+import com.chess.engine.actions.Movement;
+import com.chess.engine.board.Board;
+import com.chess.engine.pieces.Piece;
+import com.chess.engine.pieces.Position;
+import com.chess.engine.rules.Validation;
 
 public class IAPlayer extends AbstractPlayer {
     private final Validation validation;
@@ -80,5 +81,21 @@ public class IAPlayer extends AbstractPlayer {
 
     private Move calculateRandomMove(List<Move> legalMoves) {
         return legalMoves.get(random.nextInt(legalMoves.size()));
+    }
+    
+    @Override
+    public Player copy(Board newBoard) {
+        IAPlayer copy = new IAPlayer(this.isWhite, this.validation, this.movement);
+        copy.getPieces().clear();
+
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                Piece piece = newBoard.getPiece(x, y);
+                if (piece != null && piece.isWhite() == this.isWhite) {
+                    copy.getPieces().add(piece);
+                }
+            }
+        }
+        return copy;
     }
 }

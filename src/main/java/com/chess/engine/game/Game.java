@@ -1,30 +1,42 @@
 package com.chess.engine.game;
 
+import java.util.Scanner;
+
 import com.chess.engine.actions.Move;
 import com.chess.engine.actions.Movement;
 import com.chess.engine.board.Board;
-import com.chess.engine.pieces.*;
+import com.chess.engine.history.Historic;
+import com.chess.engine.pieces.Bishop;
+import com.chess.engine.pieces.King;
+import com.chess.engine.pieces.Knight;
+import com.chess.engine.pieces.Pawn;
+import com.chess.engine.pieces.Piece;
+import com.chess.engine.pieces.Position;
+import com.chess.engine.pieces.Queen;
+import com.chess.engine.pieces.Rook;
 import com.chess.engine.players.HumanPlayer;
 import com.chess.engine.players.Player;
 import com.chess.engine.rules.Validation; // Adicionado para acessar isPromoted
-
-import java.util.Scanner;
 
 public class Game {
     private final Board board;
     private final Movement movement;
     private final Validation validation; // Referência adicionada
+    private final Historic historic;
     private final Player[] players;
     private boolean isStarted;
     private int currentTurn;
+    private int turnCount;
 
     public Game(Board board, Movement movement, Validation validation, Player white, Player black) {
         this.board = board;
         this.movement = movement;
-        this.validation = validation; // Injeção da validação
+        this.validation = validation;
+        this.historic = new Historic(); // Inicialização
         this.players = new Player[]{white, black};
         this.isStarted = false;
         this.currentTurn = 0;
+        this.turnCount = 1; // Inicia no turno 1
     }
 
     /**
@@ -34,6 +46,8 @@ public class Game {
         if (isStarted) return;
         
         initializePieces();
+        
+        historic.addEntry(turnCount, board, players, null);
         
         this.isStarted = true;
         this.currentTurn = 0;
@@ -142,6 +156,8 @@ public class Game {
         player.getPieces().add(promotedPiece);
     }
 
+    
+    
     /**
      * Controla o fluxo de turnos, validação, execução e checagem de promoção.
      */
@@ -152,16 +168,13 @@ public class Game {
             generateBoard();
             Player currentPlayer = players[currentTurn];
 
-            // Chama o selectPiece polimorficamente (funciona para Humano ou IA)
             Move move = currentPlayer.selectPiece(board);
 
-            // Verifica se um movimento foi retornado (segurança)
             if (move != null) {
                 Piece piece = board.getPiece(move.source().x(), move.source().y());
 
                 if (piece != null && piece.isWhite() == currentPlayer.isWhite()) {
                     if (movement.validateMove(board, piece, move.target())) {
-                        
                         Piece captured = movement.executeMove(board, piece, move.target());
                         if (captured != null) {
                             capturePiece(captured, currentPlayer, players[1 - currentTurn]);
@@ -171,7 +184,37 @@ public class Game {
                             promotePawn((Pawn) piece, currentPlayer);
                         }
 
+                        // --- INTEGRAÇÃO DO HISTÓRICO ---
+                        turnCount++;
+                        historic.addEntry(turnCount, board, players, move);
+                        
+                        // Dentro do gameLoop, após a troca de turno:
                         currentTurn = 1 - currentTurn;
+
+                        // Verifica se o próximo jogador está em xeque-mate
+                        if (validation.isCheckmate(board, players[currentTurn], movement)) {
+                            generateBoard();
+                            System.out.println("XEQUE-MATE! O jogador " + (players[1 - currentTurn].isWhite() ? "Branco" : "Preto") + " venceu.");
+                            isStarted = false;
+                        }
+                        
+                        if (validation.isStalemate(board, players[currentTurn], movement)) {
+                            generateBoard();
+                            System.out.println("EMPATE! Afogamento (Stalemate).");
+                            isStarted = false;
+                        }
+                    
+                        if (validation.isInsufficientMaterial(board)) {
+                            generateBoard();
+                            System.out.println("EMPATE! Material insuficiente para xeque-mate.");
+                            isStarted = false;
+                        }
+                        
+                        if (validation.isRepetition(board, historic.getHistory())) {
+                            generateBoard();
+                            System.out.println("EMPATE! Repetição de jogadas (Threefold Repetition).");
+                            isStarted = false;
+                        }
                     } else {
                         System.out.println("Movimento ilegal!");
                     }
@@ -179,9 +222,7 @@ public class Game {
                     System.out.println("Selecione uma peça válida sua.");
                 }
             } else {
-                System.out.println("Nenhum movimento válido disponível.");
-                // Aqui você poderia adicionar lógica para fim de jogo (Xeque-mate)
-                break; 
+                System.out.println("Nenhum movimento selecionado.");
             }
         }
     }

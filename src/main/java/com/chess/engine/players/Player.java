@@ -10,4 +10,5 @@ public interface Player {
     List<Piece> getPieces();
     List<Piece> getCapturedPieces();
     boolean isWhite();
+    public abstract Player copy(Board newBoard);
 }

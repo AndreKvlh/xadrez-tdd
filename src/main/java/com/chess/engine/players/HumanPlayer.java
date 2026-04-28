@@ -1,9 +1,11 @@
 package com.chess.engine.players;
 
+import java.util.Scanner;
+
 import com.chess.engine.actions.Move;
 import com.chess.engine.board.Board;
+import com.chess.engine.pieces.Piece;
 import com.chess.engine.pieces.Position;
-import java.util.Scanner;
 
 public class HumanPlayer extends AbstractPlayer {
     private final Scanner scanner;
@@ -36,5 +38,21 @@ public class HumanPlayer extends AbstractPlayer {
                 System.out.println("Formato inválido! Use 'A2 A4'");
             }
         }
+    }
+    
+    @Override
+    public Player copy(Board newBoard) {
+        HumanPlayer copy = new HumanPlayer(this.isWhite);
+        copy.getPieces().clear();
+
+        for (int x = 0; x < 8; x++) {
+            for (int y = 0; y < 8; y++) {
+                Piece piece = newBoard.getPiece(x, y);
+                if (piece != null && piece.isWhite() == this.isWhite) {
+                    copy.getPieces().add(piece);
+                }
+            }
+        }
+        return copy;
     }
 }

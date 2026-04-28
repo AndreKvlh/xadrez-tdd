@@ -1,7 +1,18 @@
 package com.chess.engine.rules;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import com.chess.engine.actions.Movement;
 import com.chess.engine.board.Board;
-import com.chess.engine.pieces.*;
+import com.chess.engine.pieces.Bishop;
+import com.chess.engine.pieces.King;
+import com.chess.engine.pieces.Knight;
+import com.chess.engine.pieces.Pawn;
+import com.chess.engine.pieces.Piece;
+import com.chess.engine.pieces.Position;
+import com.chess.engine.players.Player;
 
 public class Validation {
 
@@ -92,5 +103,88 @@ public class Validation {
             }
         }
         return false;
+    }
+    
+    /**
+     * Verifica se o jogador está em xeque-mate.
+     */
+    public boolean isCheckmate(Board board, Player player, Movement movement) {
+        if (!isUnderCheck(board, player.isWhite())) {
+            return false;
+        }
+
+        for (Piece piece : player.getPieces()) {
+            for (int x = 0; x < 8; x++) {
+                for (int y = 0; y < 8; y++) {
+                    if (movement.validateMove(board, piece, new Position(x, y))) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Verifica se a posição atual é de afogamento (Stalemate).
+     */
+    public boolean isStalemate(Board board, Player player, Movement movement) {
+        if (isUnderCheck(board, player.isWhite())) {
+            return false;
+        }
+
+        for (Piece piece : player.getPieces()) {
+            for (int x = 0; x < 8; x++) {
+                for (int y = 0; y < 8; y++) {
+                    if (movement.validateMove(board, piece, new Position(x, y))) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+    
+    /**
+     * Verifica se há material insuficiente para prosseguir com o jogo.
+     */
+    public boolean isInsufficientMaterial(Board board) {
+        List<Piece> remainingPieces = new ArrayList<>();
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                Piece p = board.getPiece(i, j);
+                if (p != null && !(p instanceof King)) {
+                    remainingPieces.add(p);
+                }
+            }
+        }
+
+        if (remainingPieces.isEmpty()) return true;
+
+        if (remainingPieces.size() == 1) {
+            Piece p = remainingPieces.get(0);
+            return (p instanceof Bishop || p instanceof Knight);
+        }
+
+        return false;
+    }
+
+    /**
+     * Verifica se a posição atual já foi repetida 3 vezes.
+     */
+    public boolean isRepetition(Board currentBoard, List<Map<String, Object>> history) {
+        int occurrences = 1; // Contamos a posição atual como a primeira ocorrência
+
+        for (Map<String, Object> entry : history) {
+            Board pastBoard = (Board) entry.get("board");
+            // Uso direto do equals que acabamos de implementar
+            if (currentBoard.equals(pastBoard)) {
+                occurrences++;
+            }
+        }
+
+        return occurrences >= 3;
     }
 }

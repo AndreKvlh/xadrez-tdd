@@ -52,4 +52,45 @@ public class Board {
             throw new IllegalArgumentException("Coordenada fora dos limites do tabuleiro: " + x + "," + y);
         }
     }
+    
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        
+        Board board = (Board) o;
+        
+        // Comparamos as peças célula por célula
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                Piece p1 = this.grid[i][j];
+                Piece p2 = board.grid[i][j];
+                
+                if (p1 == null && p2 == null) continue;
+                if (p1 == null || p2 == null) return false;
+                
+                // Verifica tipo e cor da peça
+                if (p1.getClass() != p2.getClass() || p1.isWhite() != p2.isWhite()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        // Para simplificar, geramos um hash baseado na disposição das peças
+        int result = 0;
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                Piece p = grid[i][j];
+                if (p != null) {
+                    // Combina o hash da classe da peça com a cor
+                    result = 31 * result + p.getClass().hashCode() + (p.isWhite() ? 1 : 0);
+                }
+            }
+        }
+        return result;
+    }
 }
