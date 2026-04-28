@@ -17,6 +17,10 @@ public class Movement {
      * e retornando a peça capturada, caso exista.
      */
     public Piece executeMove(Board board, Piece piece, Position target) {
+    		if (piece instanceof King && Math.abs(target.x() - piece.getPosition().x()) == 2) {
+            executeCastling(board, (King) piece, target.x(), target.y());
+            return null; // Roque não captura peça adversária
+        }
         Piece capturedPiece = board.getPiece(target.x(), target.y());
 
         board.removePiece(piece.getPosition().x(), piece.getPosition().y(), piece);
@@ -32,20 +36,25 @@ public class Movement {
     }
 
     /**
-     * Valida se um movimento é legal, verificando regras geométricas, 
-     * restrições de jogo e se o movimento coloca o rei em xeque.
+     * Valida se um movimento é permitido, verificando regras de peça, 
+     * colisões e xeque.
      */
     public boolean validateMove(Board board, Piece piece, Position target) {
-        if (!piece.isValidMove(target.x(), target.y())) {
-            return false;
-        }
+        if (!piece.isValidMove(target.x(), target.y())) return false;
         if (validation.isAlliedPiece(board, piece, target)) return false;
         if (validation.isCovered(board, piece, target)) return false;
         if (piece instanceof Pawn && !validation.pawnCanAttack(board, (Pawn) piece, target)) return false;
-        
-        Board tempBoard = new Board(board); 
+
+        boolean isCastling = (piece instanceof King && Math.abs(target.x() - piece.getPosition().x()) == 2);
+
+        if (isCastling) {
+            if (validation.isUnderCheck(board, piece.isWhite())) return false;
+            if (!validation.isCastling(board, (King) piece, target.x(), target.y())) return false;
+        }
+
+        Board tempBoard = new Board(board);
         Piece tempPiece = tempBoard.getPiece(piece.getPosition().x(), piece.getPosition().y());
-        
+
         executeMove(tempBoard, tempPiece, target);
 
         return !validation.isUnderCheck(tempBoard, piece.isWhite());
