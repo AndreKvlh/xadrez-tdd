@@ -50,4 +50,28 @@ public class Movement {
 
         return !validation.isUnderCheck(tempBoard, piece.isWhite());
     }
+    
+    public void executeCastling(Board board, King king, int targetX, int targetY) {
+        int kingX = king.getPosition().x();
+        int y = king.getPosition().y();
+
+        // 1. Move o Rei
+        board.removePiece(kingX, y, null);
+        king.setPosition(new Position(targetX, y)); // Certifique-se de que esse método exista em AbstractPiece
+        board.setPiece(targetX, y, king);
+        king.setHasMoved(true);
+
+        // 2. Calcula posição da Torre e a move
+        // Se targetX > kingX (Roque Curto/Direita), Torre sai de 7 e vai para 5
+        // Se targetX < kingX (Roque Longo/Esquerda), Torre sai de 0 e vai para 3
+        int oldRookX = (targetX > kingX) ? 7 : 0;
+        int newRookX = (targetX > kingX) ? 5 : 3;
+
+        Piece rook = board.getPiece(oldRookX, y);
+        
+        board.removePiece(oldRookX, y, null);
+        rook.setPosition(new Position(newRookX, y));
+        board.setPiece(newRookX, y, rook);
+        ((Rook) rook).setHasMoved(true);
+    }
 }

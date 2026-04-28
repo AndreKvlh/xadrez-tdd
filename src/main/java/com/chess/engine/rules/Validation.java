@@ -12,6 +12,7 @@ import com.chess.engine.pieces.Knight;
 import com.chess.engine.pieces.Pawn;
 import com.chess.engine.pieces.Piece;
 import com.chess.engine.pieces.Position;
+import com.chess.engine.pieces.Rook;
 import com.chess.engine.players.Player;
 
 public class Validation {
@@ -186,5 +187,38 @@ public class Validation {
         }
 
         return occurrences >= 3;
+    }
+    
+    public boolean isCastling(Board board, King king, int targetX, int targetY) {
+        // 1. O Rei já se moveu?
+        if (king.hasMoved()) return false;
+
+        // 2. O movimento é horizontal de 2 casas?
+        int kingX = king.getPosition().x();
+        int kingY = king.getPosition().y();
+        if (Math.abs(targetX - kingX) != 2 || targetY != kingY) return false;
+
+        // 3. Identifica a torre alvo e verifica se está no lugar certo
+        // Se targetX > kingX, é roque curto (lado da torre em X=7)
+        // Se targetX < kingX, é roque longo (lado da torre em X=0)
+        int rookX = (targetX > kingX) ? 7 : 0;
+        
+        Piece piece = board.getPiece(rookX, kingY);
+
+        if (!(piece instanceof Rook rook)) return false; // Usa Pattern Matching for instanceof (Java 16+)
+        if (rook.isWhite() != king.isWhite() || rook.hasMoved()) return false;
+
+        // 4. O caminho entre o Rei e a Torre está livre?
+        int startX = Math.min(kingX, rookX);
+        int endX = Math.max(kingX, rookX);
+
+        for (int x = startX + 1; x < endX; x++) {
+            if (!board.isEmpty(x, kingY)) return false;
+        }
+
+        // TODO: Futuramente, adicionar verificação se o Rei passa por casas sob ataque
+        // Ex: if (isUnderAttack(board, ...)) return false;
+
+        return true;
     }
 }

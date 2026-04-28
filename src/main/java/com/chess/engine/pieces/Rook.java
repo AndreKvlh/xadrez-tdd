@@ -1,6 +1,7 @@
 package com.chess.engine.pieces;
 
 public class Rook extends AbstractPiece {
+    private boolean hasMoved = false;
 
     public Rook(Position position, boolean isWhite) {
         super(position, isWhite);
@@ -20,6 +21,11 @@ public class Rook extends AbstractPiece {
 
     @Override
     public Piece copy() {
-        return new Rook(this.position, this.isWhite);
+        Rook copy = new Rook(this.position, this.isWhite);
+        copy.setHasMoved(this.hasMoved);
+        return copy;
     }
+
+    public void setHasMoved(boolean hasMoved) { this.hasMoved = hasMoved; }
+    public boolean hasMoved() { return hasMoved; }
 }
