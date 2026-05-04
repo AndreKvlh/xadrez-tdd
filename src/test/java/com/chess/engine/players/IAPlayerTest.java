@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import com.chess.engine.actions.Move;
 import com.chess.engine.actions.Movement;
 import com.chess.engine.board.Board;
+import com.chess.engine.history.Historic;
 import com.chess.engine.pieces.Pawn;
 import com.chess.engine.pieces.Position;
 import com.chess.engine.rules.Validation;
@@ -19,7 +20,8 @@ public class IAPlayerTest {
         Board board = new Board();
         // Precisamos instanciar as dependências para o construtor da IA
         Validation validation = new Validation();
-        Movement movement = new Movement(validation);
+        Historic historic = new Historic();
+        Movement movement = new Movement(validation, historic);
         
         IAPlayer ia = new IAPlayer(true, validation, movement);
         

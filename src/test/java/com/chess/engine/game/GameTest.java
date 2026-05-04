@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import com.chess.engine.actions.Movement;
 import com.chess.engine.board.Board;
+import com.chess.engine.history.Historic;
 import com.chess.engine.players.HumanPlayer;
 import com.chess.engine.rules.Validation;
 
@@ -15,9 +16,11 @@ class GameTest {
     @Test
     void testGameStartShouldChangeStatusToStarted() {
         Board board = new Board();
-        Movement movement = new Movement(new Validation());
         Validation validation = new Validation();
-        Game game = new Game(board, movement, validation, new HumanPlayer(true), new HumanPlayer(false));
+        Historic historic = new Historic();
+        Movement movement = new Movement(validation, historic);
+        
+        Game game = new Game(board, validation, historic, movement,  new HumanPlayer(true), new HumanPlayer(false));
 
         // Estado inicial
         assertFalse(game.isStarted(), "O jogo não deveria iniciar como Started");

@@ -52,11 +52,20 @@ public class IAPlayer extends AbstractPlayer {
      */
     private List<Move> getLegalMoves(Board board) {
         List<Move> legalMoves = new ArrayList<>();
-        for (Piece piece : this.pieces) {
+        // Criamos uma cópia para evitar erros de concorrência e garantir integridade
+        List<Piece> piecesToProcess = new ArrayList<>(this.pieces);
+
+        for (Piece piece : piecesToProcess) {
+            // VERIFICAÇÃO CRÍTICA: Se a peça na posição informada não for a própria peça,
+            // significa que ela foi capturada ou movida indevidamente.
+            Piece pieceOnBoard = board.getPiece(piece.getPosition().x(), piece.getPosition().y());
+            if (pieceOnBoard != piece) {
+                continue; 
+            }
+
             for (int y = 0; y < 8; y++) {
                 for (int x = 0; x < 8; x++) {
                     Position target = new Position(x, y);
-                    // Usa a classe Movement para validar se o movimento é permitido
                     if (movement.validateMove(board, piece, target)) {
                         legalMoves.add(new Move(piece.getPosition(), target));
                     }

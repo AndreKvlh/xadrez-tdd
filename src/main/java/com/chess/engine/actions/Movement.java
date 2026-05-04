@@ -1,15 +1,23 @@
 package com.chess.engine.actions;
 
 import com.chess.engine.board.Board;
-import com.chess.engine.pieces.*;
+import com.chess.engine.history.Historic;
+import com.chess.engine.pieces.King;
+import com.chess.engine.pieces.Pawn;
+import com.chess.engine.pieces.Piece;
+import com.chess.engine.pieces.Position;
+import com.chess.engine.pieces.Rook;
 import com.chess.engine.rules.Validation;
 
 public class Movement {
 
-    private final Validation validation;
+	private final Validation validation;
+    private final Historic historic; // Novo campo
 
-    public Movement(Validation validation) {
+    // Atualizamos o construtor para receber ambos
+    public Movement(Validation validation, Historic historic) {
         this.validation = validation;
+        this.historic = historic;
     }
 
     /**
@@ -21,6 +29,12 @@ public class Movement {
             executeCastling(board, (King) piece, target.x(), target.y());
             return null; // Roque não captura peça adversária
         }
+    		
+    		// Verifica se é En Passant antes de executar o movimento padrão
+        if (piece instanceof Pawn && validation.isEnPassant(board, (Pawn) piece, target, historic)) {
+            return executeEnPassant(board, (Pawn) piece, target);
+        }
+    		
         Piece capturedPiece = board.getPiece(target.x(), target.y());
 
         board.removePiece(piece.getPosition().x(), piece.getPosition().y(), piece);
@@ -40,6 +54,9 @@ public class Movement {
      * colisões e xeque.
      */
     public boolean validateMove(Board board, Piece piece, Position target) {
+        // Se a peça passada for nula, o movimento é logicamente impossível
+        if (piece == null) return false; 
+        
         if (!piece.isValidMove(target.x(), target.y())) return false;
         if (validation.isAlliedPiece(board, piece, target)) return false;
         if (validation.isCovered(board, piece, target)) return false;
@@ -54,6 +71,9 @@ public class Movement {
 
         Board tempBoard = new Board(board);
         Piece tempPiece = tempBoard.getPiece(piece.getPosition().x(), piece.getPosition().y());
+
+        // Verificação extra antes de simular o movimento no tabuleiro temporário
+        if (tempPiece == null) return false;
 
         executeMove(tempBoard, tempPiece, target);
 
@@ -82,5 +102,30 @@ public class Movement {
         rook.setPosition(new Position(newRookX, y));
         board.setPiece(newRookX, y, rook);
         ((Rook) rook).setHasMoved(true);
+    }
+    
+    /**
+     * Executa o movimento de En Passant, removendo o peão adversário que 
+     * está na lateral e movendo o peão atacante para o destino.
+     */
+    public Piece executeEnPassant(Board board, Pawn pawn, Position target) {
+        // No En Passant, o peão capturado está na mesma coluna do target,
+        // mas na linha de origem do peão atacante (y original).
+        int capturedPawnX = target.x();
+        int capturedPawnY = pawn.getPosition().y();
+        
+        // 1. Identifica e remove a peça capturada (o peão adversário ao lado)
+        Piece capturedPiece = board.getPiece(capturedPawnX, capturedPawnY);
+        board.removePiece(capturedPawnX, capturedPawnY, capturedPiece);
+        
+        // 2. Remove o peão atacante da posição atual
+        board.removePiece(pawn.getPosition().x(), pawn.getPosition().y(), pawn);
+        
+        // 3. Move o peão atacante para a casa de destino (atrás de onde estava o adversário)
+        pawn.setPosition(target);
+        board.setPiece(target.x(), target.y(), pawn);
+        pawn.setHasMoved(true);
+        
+        return capturedPiece;
     }
 }

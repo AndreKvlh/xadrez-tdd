@@ -1,6 +1,7 @@
 package com.chess.engine.actions;
 
 import com.chess.engine.board.Board;
+import com.chess.engine.history.Historic;
 import com.chess.engine.pieces.*;
 import com.chess.engine.rules.Validation;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,15 +10,17 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MovementTest {
 
-    private Board board;
+	private Board board;
     private Validation validation;
     private Movement movement;
+    private Historic historic;
 
     @BeforeEach
-    void setUp() {
+    public void setup() {
         board = new Board();
         validation = new Validation();
-        movement = new Movement(validation);
+        historic = new Historic();
+        movement = new Movement(validation, historic);
     }
 
     @Test

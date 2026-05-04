@@ -1,87 +1,56 @@
 package com.chess.engine.game;
 
-import java.util.Scanner;
-
 import com.chess.engine.actions.Move;
 import com.chess.engine.actions.Movement;
 import com.chess.engine.board.Board;
 import com.chess.engine.history.Historic;
-import com.chess.engine.pieces.Bishop;
-import com.chess.engine.pieces.King;
-import com.chess.engine.pieces.Knight;
-import com.chess.engine.pieces.Pawn;
-import com.chess.engine.pieces.Piece;
-import com.chess.engine.pieces.Position;
-import com.chess.engine.pieces.Queen;
-import com.chess.engine.pieces.Rook;
-import com.chess.engine.players.HumanPlayer;
+import com.chess.engine.pieces.*;
 import com.chess.engine.players.Player;
-import com.chess.engine.rules.Validation; // Adicionado para acessar isPromoted
+import com.chess.engine.rules.Validation;
 
 public class Game {
     private final Board board;
     private final Movement movement;
-    private final Validation validation; // Referência adicionada
+    private final Validation validation;
     private final Historic historic;
     private final Player[] players;
     private boolean isStarted;
-    private int currentTurn;
+    private int currentTurn; // 0 para Brancas, 1 para Pretas
     private int turnCount;
 
-    public Game(Board board, Movement movement, Validation validation, Player white, Player black) {
+    public Game(Board board, Validation validation, Historic historic, Movement movement, Player white, Player black) {
         this.board = board;
-        this.movement = movement;
         this.validation = validation;
-        this.historic = new Historic(); // Inicialização
+        this.historic = historic;
+        this.movement = movement;
         this.players = new Player[]{white, black};
         this.isStarted = false;
         this.currentTurn = 0;
-        this.turnCount = 1; // Inicia no turno 1
+        this.turnCount = 1;
     }
 
-    /**
-     * Inicia o jogo, configurando o tabuleiro e definindo o estado como iniciado.
-     */
     public void startGame() {
         if (isStarted) return;
-        
         initializePieces();
-        
+        // O primeiro registro no histórico não tem movimento
         historic.addEntry(turnCount, board, players, null);
-        
         this.isStarted = true;
-        this.currentTurn = 0;
-        System.out.println("Jogo iniciado! Vez das Brancas.");
     }
 
-    /**
-     * Posiciona as peças no tabuleiro nas coordenadas iniciais e 
-     * registra cada peça na lista de peças do jogador correspondente.
-     */
     private void initializePieces() {
-        // Posicionamento das peças (Y=0,7 back row; Y=1,6 pawns)
-        // Índice 0: Brancas (players[0]), Índice 1: Pretas (players[1])
-        
-        // --- Peças Pretas (Linhas 0 e 1) ---
         setupBackRow(0, false);
         setupPawnRow(1, false);
-
-        // --- Peças Brancas (Linhas 7 e 6) ---
         setupBackRow(7, true);
         setupPawnRow(6, true);
     }
 
     private void setupBackRow(int y, boolean isWhite) {
         Player player = isWhite ? players[0] : players[1];
-        
-        // Ordem: Torre, Cavalo, Bispo, Rainha, Rei, Bispo, Cavalo, Torre
-        // Nota: Assumindo que seu construtor de Peça aceita (Position, isWhite)
-        // Se a lógica de posição for tratada via setPosition no setPiece, ajustamos aqui.
-        
         Piece[] pieces = {
-            new Rook(null, isWhite), new Knight(null, isWhite), new Bishop(null, isWhite),
-            new Queen(null, isWhite), new King(null, isWhite), new Bishop(null, isWhite),
-            new Knight(null, isWhite), new Rook(null, isWhite)
+            new Rook(new Position(0, y), isWhite), new Knight(new Position(1, y), isWhite), 
+            new Bishop(new Position(2, y), isWhite), new Queen(new Position(3, y), isWhite), 
+            new King(new Position(4, y), isWhite), new Bishop(new Position(5, y), isWhite),
+            new Knight(new Position(6, y), isWhite), new Rook(new Position(7, y), isWhite)
         };
 
         for (int x = 0; x < 8; x++) {
@@ -93,158 +62,70 @@ public class Game {
     private void setupPawnRow(int y, boolean isWhite) {
         Player player = isWhite ? players[0] : players[1];
         for (int x = 0; x < 8; x++) {
-            Position pos = new Position(x, y); // Define a posição correta
-            Pawn pawn = new Pawn(pos, isWhite);
+            Pawn pawn = new Pawn(new Position(x, y), isWhite);
             board.setPiece(x, y, pawn);
             player.getPieces().add(pawn);
         }
     }
-    /**
-     * Reinicia o jogo, limpando o tabuleiro e as listas de peças dos jogadores.
-     */
-    public void restartGame() {
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                board.setPiece(i, j, null);
-            }
-        }
-        for (Player p : players) {
-            p.getPieces().clear();
-            p.getCapturedPieces().clear();
-        }
-        this.isStarted = false;
-        System.out.println("Jogo reiniciado.");
-    }
 
     /**
-     * Remove a peça capturada do jogador vitimado e a adiciona à lista de capturadas do capturador.
+     * Este método agora é chamado pela BoardView após cada movimento executado.
+     * Ele centraliza a lógica de fim de jogo e atualização de turno.
      */
-    public void capturePiece(Piece piece, Player capturer, Player victim) {
-        if (victim.getPieces().remove(piece)) {
-            capturer.getCapturedPieces().add(piece);
+    public String confirmTurn(Move lastMove) {
+        Player currentPlayer = players[currentTurn];
+        Piece movedPiece = board.getPiece(lastMove.target().x(), lastMove.target().y());
+
+        // 1. Verifica Promoção
+        if (validation.isPromoted(movedPiece)) {
+            promotePawn((Pawn) movedPiece, currentPlayer);
         }
+
+        // 2. Atualiza Histórico
+        turnCount++;
+        historic.addEntry(turnCount, board, players, lastMove);
+        
+        // 3. Troca o turno
+        currentTurn = 1 - currentTurn;
+        Player nextPlayer = players[currentTurn];
+
+        // 4. Verificações de Fim de Jogo (Otimizadas)
+        if (validation.isCheckmate(board, nextPlayer, movement)) {
+            isStarted = false;
+            return "XEQUE-MATE! Vitória das " + (currentPlayer.isWhite() ? "Brancas" : "Pretas");
+        }
+        
+        if (validation.isStalemate(board, nextPlayer, movement)) {
+            isStarted = false;
+            return "EMPATE por Afogamento!";
+        }
+
+        if (validation.isInsufficientMaterial(board)) {
+            isStarted = false;
+            return "EMPATE por Material Insuficiente!";
+        }
+
+        // A verificação de repetição pode ser pesada, use com cautela
+        if (turnCount > 6 && validation.isRepetition(board, historic.getHistory())) {
+            isStarted = false;
+            return "EMPATE por Repetição!";
+        }
+
+        return null; // Jogo continua
     }
 
-    /**
-     * Promove um peão: humano escolhe a peça, IA promove automaticamente para Rainha.
-     * Atualiza o tabuleiro e a lista de peças do jogador.
-     */
     public void promotePawn(Pawn pawn, Player player) {
-        Piece promotedPiece;
-        boolean isWhite = pawn.isWhite();
+        // No JavaFX, para simplificar por enquanto, promovemos sempre para Queen
+        // Para evitar o uso de Scanner que trava a Thread da interface.
         Position pos = pawn.getPosition();
-
-        if (player instanceof HumanPlayer) {
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("Promoção! Escolha: (Q)ueen, (R)ook, (B)ishop, (K)night");
-            String choice = scanner.nextLine().toUpperCase();
-            
-            promotedPiece = switch (choice) {
-                case "R" -> new Rook(pos, isWhite);
-                case "B" -> new Bishop(pos, isWhite);
-                case "K" -> new Knight(pos, isWhite);
-                default -> new Queen(pos, isWhite); // Padrão Rainha
-            };
-        } else {
-            System.out.println("IA promoveu para Rainha.");
-            promotedPiece = new Queen(pos, isWhite);
-        }
-
-        // Atualiza a peça no Board e no Player
-        board.setPiece(pos.x(), pos.y(), promotedPiece);
+        Queen queen = new Queen(pos, pawn.isWhite());
+        board.setPiece(pos.x(), pos.y(), queen);
         player.getPieces().remove(pawn);
-        player.getPieces().add(promotedPiece);
+        player.getPieces().add(queen);
     }
 
-    
-    
-    /**
-     * Controla o fluxo de turnos, validação, execução e checagem de promoção.
-     */
-    public void gameLoop() {
-        if (!isStarted) throw new IllegalStateException("O jogo não foi iniciado.");
-
-        while (isStarted) {
-            generateBoard();
-            Player currentPlayer = players[currentTurn];
-
-            Move move = currentPlayer.selectPiece(board);
-
-            if (move != null) {
-                Piece piece = board.getPiece(move.source().x(), move.source().y());
-
-                if (piece != null && piece.isWhite() == currentPlayer.isWhite()) {
-                    if (movement.validateMove(board, piece, move.target())) {
-                        Piece captured = movement.executeMove(board, piece, move.target());
-                        if (captured != null) {
-                            capturePiece(captured, currentPlayer, players[1 - currentTurn]);
-                        }
-
-                        if (validation.isPromoted(piece)) {
-                            promotePawn((Pawn) piece, currentPlayer);
-                        }
-
-                        // --- INTEGRAÇÃO DO HISTÓRICO ---
-                        turnCount++;
-                        historic.addEntry(turnCount, board, players, move);
-                        
-                        // Dentro do gameLoop, após a troca de turno:
-                        currentTurn = 1 - currentTurn;
-
-                        // Verifica se o próximo jogador está em xeque-mate
-                        if (validation.isCheckmate(board, players[currentTurn], movement)) {
-                            generateBoard();
-                            System.out.println("XEQUE-MATE! O jogador " + (players[1 - currentTurn].isWhite() ? "Branco" : "Preto") + " venceu.");
-                            isStarted = false;
-                        }
-                        
-                        if (validation.isStalemate(board, players[currentTurn], movement)) {
-                            generateBoard();
-                            System.out.println("EMPATE! Afogamento (Stalemate).");
-                            isStarted = false;
-                        }
-                    
-                        if (validation.isInsufficientMaterial(board)) {
-                            generateBoard();
-                            System.out.println("EMPATE! Material insuficiente para xeque-mate.");
-                            isStarted = false;
-                        }
-                        
-                        if (validation.isRepetition(board, historic.getHistory())) {
-                            generateBoard();
-                            System.out.println("EMPATE! Repetição de jogadas (Threefold Repetition).");
-                            isStarted = false;
-                        }
-                    } else {
-                        System.out.println("Movimento ilegal!");
-                    }
-                } else {
-                    System.out.println("Selecione uma peça válida sua.");
-                }
-            } else {
-                System.out.println("Nenhum movimento selecionado.");
-            }
-        }
-    }
-
-    /**
-     * Gera a representação visual do tabuleiro no console.
-     * AVISO: Esta visualização será ajustada quando integrarmos a GUI.
-     */
-    public void generateBoard() {
-        System.out.println("\n  A B C D E F G H");
-        for (int y = 0; y < 8; y++) {
-            System.out.print((8 - y) + " ");
-            for (int x = 0; x < 8; x++) {
-                Piece p = board.getPiece(x, y);
-                // Agora o polimorfismo resolve a exibição para qualquer peça
-                System.out.print((p == null ? "." : p.getDisplay()) + " ");
-            }
-            System.out.println();
-        }
-    }
-    
-    public boolean isStarted() {
-        return isStarted;
-    }
+    // Getters para a BoardView consultar
+    public Player getCurrentPlayer() { return players[currentTurn]; }
+    public boolean isStarted() { return isStarted; }
+    public Board getBoard() { return board; }
 }

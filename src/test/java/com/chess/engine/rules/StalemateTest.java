@@ -1,18 +1,23 @@
 package com.chess.engine.rules;
 
-import com.chess.engine.actions.Movement;
-import com.chess.engine.board.Board;
-import com.chess.engine.pieces.*;
-import com.chess.engine.players.HumanPlayer;
-import com.chess.engine.players.Player;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import com.chess.engine.actions.Movement;
+import com.chess.engine.board.Board;
+import com.chess.engine.history.Historic;
+import com.chess.engine.pieces.King;
+import com.chess.engine.pieces.Position;
+import com.chess.engine.pieces.Queen;
+import com.chess.engine.players.HumanPlayer;
+import com.chess.engine.players.Player;
 
 public class StalemateTest {
     private Board board;
     private Validation validation;
+    private Historic historic;
     private Movement movement;
     private Player white;
     private Player black;
@@ -21,7 +26,8 @@ public class StalemateTest {
     public void setup() {
         board = new Board();
         validation = new Validation();
-        movement = new Movement(validation);
+        historic = new Historic();
+        movement = new Movement(validation, historic);
         white = new HumanPlayer(true);
         black = new HumanPlayer(false);
     }

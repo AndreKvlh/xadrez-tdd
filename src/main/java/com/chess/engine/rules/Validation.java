@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.chess.engine.actions.Move;
 import com.chess.engine.actions.Movement;
 import com.chess.engine.board.Board;
+import com.chess.engine.history.Historic;
 import com.chess.engine.pieces.Bishop;
 import com.chess.engine.pieces.King;
 import com.chess.engine.pieces.Knight;
@@ -220,5 +222,30 @@ public class Validation {
         // Ex: if (isUnderAttack(board, ...)) return false;
 
         return true;
+    }
+    
+    public boolean isEnPassant(Board board, Pawn pawn, Position target, Historic historic) {
+        Map<String, Object> lastTurn = historic.getLastTurn();
+        if (lastTurn == null) return false;
+
+        Move lastMove = (Move) lastTurn.get("last-play");
+        if (lastMove == null) return false;
+
+        Piece lastPiece = board.getPiece(lastMove.target().x(), lastMove.target().y());
+        if (!(lastPiece instanceof Pawn enemyPawn) || enemyPawn.isWhite() == pawn.isWhite()) {
+            return false;
+        }
+
+        if (Math.abs(lastMove.target().y() - lastMove.source().y()) != 2) return false;
+
+        int pawnY = pawn.getPosition().y();
+        int enemyX = enemyPawn.getPosition().x();
+
+        if (pawnY != enemyPawn.getPosition().y() || Math.abs(pawn.getPosition().x() - enemyX) != 1) {
+            return false;
+        }
+
+        int capturedY = (lastMove.source().y() + lastMove.target().y()) / 2;
+        return target.x() == enemyX && target.y() == capturedY;
     }
 }

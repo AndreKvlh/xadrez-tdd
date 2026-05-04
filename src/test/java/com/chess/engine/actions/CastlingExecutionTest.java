@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.chess.engine.board.Board;
+import com.chess.engine.history.Historic;
 import com.chess.engine.pieces.King;
 import com.chess.engine.pieces.Position;
 import com.chess.engine.pieces.Rook;
@@ -17,12 +18,14 @@ public class CastlingExecutionTest {
     private Board board;
     private Validation validation;
     private Movement movement;
+    private Historic historic;
 
     @BeforeEach
     public void setup() {
         board = new Board();
         validation = new Validation();
-        movement = new Movement(validation);
+        historic = new Historic();
+        movement = new Movement(validation, historic);
     }
 
     @Test
